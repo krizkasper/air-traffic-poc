@@ -10,6 +10,7 @@ Real-time air traffic map. Vite + React 19 + TypeScript, rendered with MapLibre 
 - `src/components/` — UI elements rendered over the map (buttons, controls); receive the `Map` instance as a prop, don't create or own it.
 - `src/lib/` — pure helper functions with no React/map lifecycle dependencies (e.g. canvas icon generation).
 - `src/types.ts` — shared type definitions, notably the OpenSky API response shape.
+- `vite-plugins/` — Node-side Vite plugins (dev server only, not part of the app bundle), e.g. the OpenSky OAuth2 proxy.
 
 ## Commands
 
@@ -26,6 +27,6 @@ Real-time air traffic map. Vite + React 19 + TypeScript, rendered with MapLibre 
 
 ## Known gotchas
 
-- The `/opensky` proxy in `vite.config.ts` (rewrites to `https://opensky-network.org/api`) only exists in the Vite dev server. It does not exist in a production build — deploying requires a real backend/serverless proxy or OpenSky's CORS restrictions will block the browser fetch.
+- The `/opensky` proxy (`vite-plugins/openskyProxyPlugin.ts`, wired up in `vite.config.ts`) only exists in the Vite dev server. It does not exist in a production build — deploying requires a real backend/serverless proxy or OpenSky's CORS restrictions will block the browser fetch.
 - MapLibre GL JS v6 loads its worker via a URL relative to its own module (`import.meta.url`). Vite's dependency pre-bundler rewrites that URL incorrectly, so `maplibre-gl` is excluded from `optimizeDeps` in `vite.config.ts` — don't remove that exclusion without re-testing the worker loads.
-- OpenSky's public (unauthenticated) endpoint is aggressively rate-limited; expect occasional 429s.
+- The proxy authenticates against OpenSky via OAuth2 client credentials (`OPENSKY_CLIENT_ID`/`OPENSKY_CLIENT_SECRET` in `.env`, gitignored) and caches the token until expiry. Without those env vars it silently falls back to anonymous access, which is aggressively rate-limited (400 credits/day, 10s resolution) — expect frequent 429s in that case.
