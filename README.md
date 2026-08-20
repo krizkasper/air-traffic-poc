@@ -55,3 +55,7 @@ The dev server (`vite-plugins/openskyProxyPlugin.ts`) exchanges these for an OAu
 - No interpolation between fetches — aircraft jump to their new position on each refresh instead of animating smoothly.
 - No clustering — at high aircraft density, symbols will start overlapping.
 - The OpenSky proxy only exists in the Vite dev server; a production deployment needs a real backend/serverless proxy in front of the OpenSky API.
+
+## Credits
+
+3D aircraft model by [Crimexix](https://sketchfab.com/Crimexix) on Sketchfab, licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
