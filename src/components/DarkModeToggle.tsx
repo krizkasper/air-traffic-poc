@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import type { Map } from 'maplibre-gl'
+import darkModeIconUrl from '../lib/dark-mode.svg?url'
+import lightModeIconUrl from '../lib/light-mode.svg?url'
 
 const LIGHT_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty'
 const DARK_STYLE_URL = 'https://tiles.openfreemap.org/styles/dark'
@@ -17,11 +19,17 @@ export function DarkModeToggle({ map }: DarkModeToggleProps) {
   }
 
   return (
-    <button
-      className="px-4 py-2 bg-blue-950/40 text-white text-sm font-medium backdrop-blur-md border border-white/20 rounded shadow-lg hover:bg-blue-950/60 transition-colors cursor-pointer"
-      onClick={handleClick}
-    >
-      {isDark ? 'Light Mode' : 'Dark Mode'}
-    </button>
+    <div className="group relative">
+      <button
+        className="p-2 bg-blue-950/40 backdrop-blur-md border border-white/20 rounded shadow-lg hover:bg-blue-950/60 transition-colors cursor-pointer"
+        onClick={handleClick}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        <img src={isDark ? lightModeIconUrl : darkModeIconUrl} alt="" className="w-5 h-5" />
+      </button>
+      <span className="pointer-events-none absolute left-0 top-full mt-2 whitespace-nowrap rounded border border-white/20 bg-blue-950/80 px-2 py-1 text-xs text-white opacity-0 shadow-lg backdrop-blur-md transition-opacity group-hover:opacity-100">
+        {isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+      </span>
+    </div>
   )
 }

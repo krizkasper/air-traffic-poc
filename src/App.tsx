@@ -14,8 +14,8 @@ export const App = () => {
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
       <div id="map" style={{ width: '100%', height: '100%' }} />
       <div className="absolute top-56 left-6 flex items-center gap-3">
-        <LocateButton map={map} />
         <DarkModeToggle map={map} />
+        <LocateButton map={map} />
         <ResetViewButton map={map} />
       </div>
       <Hud aircraftCount={aircraftCount} lastUpdated={lastUpdated} />
