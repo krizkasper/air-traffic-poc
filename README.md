@@ -2,9 +2,9 @@
 
 Live map of air traffic over Europe. Fetches real-time aircraft positions from the OpenSky Network and renders them on a MapLibre GL JS map.
 
-| Light mode | Dark mode |
-| --- | --- |
-| ![Light mode map view](src/assets/light_mode.png) | ![Dark mode map view](src/assets/dark_mode.png) |
+| Light mode | Dark mode | Globe mode |
+| --- | --- | --- |
+| ![Light mode map view](src/assets/light_mode.png) | ![Dark mode map view](src/assets/dark_mode.png) | ![Globe mode map view](src/assets/globe_mode.png) |
 
 ## Setup
 
