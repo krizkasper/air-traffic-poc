@@ -32,6 +32,8 @@ export function useAircraftLayer(map: Map | null) {
   useEffect(() => {
     if (!map) return
 
+    let intervalId: number | undefined
+
     const handleLoad = () => {
       map.addImage('plane-icon', createPlaneIcon())
 
@@ -54,11 +56,13 @@ export function useAircraftLayer(map: Map | null) {
       })
 
       fetchAircraft(map)
+      intervalId = window.setInterval(() => fetchAircraft(map), 12000)
     }
 
     map.on('load', handleLoad)
     return () => {
       map.off('load', handleLoad)
+      window.clearInterval(intervalId)
     }
   }, [map])
 }
