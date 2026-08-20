@@ -14,6 +14,7 @@ const SOURCE_ID = 'aircraft'
 const LAYER_ID = 'aircraft-layer'
 
 type AircraftProperties = {
+  icao24: string
   heading: number
   callsign: string
   country: string
@@ -119,6 +120,7 @@ async function fetchAircraft(
         coordinates: [state[5], state[6]] as [number, number],
       },
       properties: {
+        icao24: state[0],
         heading: state[10] ?? 0,
         callsign: state[1]?.trim() || 'Unknown',
         country: state[2],
@@ -197,6 +199,7 @@ export function useAircraftLayer(map: Map | null) {
       popup.on('close', () => {
         hoveredCallsignRef.current = null
         hoveredPositionRef.current = null
+        map.setFilter(LAYER_ID, null)
       })
 
       map.on('mouseenter', LAYER_ID, () => {
@@ -220,6 +223,7 @@ export function useAircraftLayer(map: Map | null) {
           lat: coordinates[1],
           heading: properties.heading,
         }
+        map.setFilter(LAYER_ID, ['!=', ['get', 'icao24'], properties.icao24])
         popup.setLngLat(coordinates).setHTML(popupHtml(properties)).addTo(map)
       })
 
