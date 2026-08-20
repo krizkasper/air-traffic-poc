@@ -39,7 +39,7 @@ export function LocateButton({ map }: LocateButtonProps) {
 
   return (
     <button
-      className="absolute top-6 left-6 px-4 py-2 bg-slate-900/40 text-sky-200 text-sm font-medium backdrop-blur-md border border-white/70 hover:bg-slate-900/70 transition-colors cursor-pointer"
+      className="absolute top-56 left-6 px-4 py-2 bg-blue-950/40 text-white text-sm font-medium backdrop-blur-md border border-white/20 rounded-2xl shadow-lg hover:bg-blue-950/60 transition-colors cursor-pointer"
       onClick={handleClick}
     >
       My Location
