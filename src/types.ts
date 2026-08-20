@@ -17,6 +17,7 @@ export type OpenSkyState = [
   squawk: string | null,
   spi: boolean,
   positionSource: number,
+  category: number,
 ]
 
 export type OpenSkyStatesResponse = {

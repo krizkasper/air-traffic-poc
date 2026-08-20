@@ -7,7 +7,7 @@ import type { OpenSkyState, OpenSkyStatesResponse } from '../types'
 import planeIconUrl from '../lib/plane.svg?url'
 import helicopterIconUrl from '../lib/helicopter.svg?url'
 
-const OPENSKY_URL = '/opensky/states/all?lamin=34&lomin=-25&lamax=72&lomax=45'
+const OPENSKY_URL = '/opensky/states/all?lamin=34&lomin=-25&lamax=72&lomax=45&extended=1'
 const SOURCE_ID = 'aircraft'
 const LAYER_ID = 'aircraft-layer'
 
@@ -18,6 +18,7 @@ type AircraftProperties = {
   altitude: number
   velocity: number
   onGround: boolean
+  category: number
 }
 
 function popupHtml({ callsign, country, altitude, velocity, onGround }: AircraftProperties): string {
@@ -121,6 +122,7 @@ async function fetchAircraft(
         altitude: state[7] ?? 0,
         velocity: state[9] ?? 0,
         onGround: state[8],
+        category: state[17] ?? 0,
       },
     }))
 
@@ -164,8 +166,8 @@ export function useAircraftLayer(map: Map | null) {
         type: 'symbol',
         source: SOURCE_ID,
         layout: {
-          'icon-image': 'plane-icon',
-          'icon-size': 0.8,
+          'icon-image': ['match', ['get', 'category'], 8, 'helicopter-icon', 'plane-icon'],
+          'icon-size': ['match', ['get', 'category'], 6, 1.3, 5, 1.2, 4, 1.1, 2, 0.6, 3, 0.7, 0.8],
           'icon-rotate': ['get', 'heading'],
           'icon-rotation-alignment': 'map',
           'icon-allow-overlap': true,
