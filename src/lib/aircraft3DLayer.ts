@@ -11,6 +11,15 @@ const MODEL_ALTITUDE = 0
 // into a visual highlight, not a geographically accurate object.
 const EXAGGERATION_FACTOR = 3000
 
+// The mercator Y-flip (see the `.scale(scale, -scale, scale)` below) is applied
+// after the heading rotation, and flipping one axis inverts the handedness of a
+// rotation around the perpendicular (Z) axis. So the heading angle must be
+// negated here to compensate, or the model spins opposite to the real turn.
+// This offset is the model's own default "nose" direction once stood up by
+// rotationX below - aircraft3d.glb's may not be 0; nudge in 90° steps (Math.PI / 2)
+// while comparing against a plane's actual heading if the model still points wrong.
+const MODEL_HEADING_OFFSET = 0
+
 export type AircraftPosition = { lng: number; lat: number; heading: number }
 
 export function createAircraft3DLayer(
@@ -62,9 +71,13 @@ export function createAircraft3DLayer(
       const scale = modelAsMercatorCoordinate.meterInMercatorCoordinateUnits() * EXAGGERATION_FACTOR
 
       const rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2)
-      // +90° corrects a fixed offset in aircraft3d.glb's base orientation: its
-      // modeled "nose" direction doesn't line up with OpenSky's heading convention.
-      const rotationZ = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), heading + Math.PI / 2)
+      // OpenSky's heading (trueTrack) is in degrees, same as the 2D icon-rotate
+      // layer expects - but Three.js rotations need radians.
+      const headingRad = THREE.MathUtils.degToRad(heading)
+      const rotationZ = new THREE.Matrix4().makeRotationAxis(
+        new THREE.Vector3(0, 0, 1),
+        -headingRad + MODEL_HEADING_OFFSET
+      )
 
       const m = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix)
       const l = new THREE.Matrix4()

@@ -101,7 +101,7 @@ async function fetchAircraft(
   setAircraftCount: Dispatch<SetStateAction<number>>,
   setLastUpdated: Dispatch<SetStateAction<Date | null>>,
   popup: Popup,
-  hoveredCallsignRef: { current: string | null },
+  selectedIcao24Ref: { current: string | null },
   hoveredPositionRef: { current: AircraftPosition | null }
 ) {
   const response = await fetch(OPENSKY_URL)
@@ -137,8 +137,8 @@ async function fetchAircraft(
   setAircraftCount(features.length)
   setLastUpdated(new Date())
 
-  if (hoveredCallsignRef.current) {
-    const hovered = features.find((f) => f.properties.callsign === hoveredCallsignRef.current)
+  if (selectedIcao24Ref.current) {
+    const hovered = features.find((f) => f.properties.icao24 === selectedIcao24Ref.current)
     if (hovered) {
       popup.setLngLat(hovered.geometry.coordinates).setHTML(popupHtml(hovered.properties))
       hoveredPositionRef.current = {
@@ -194,10 +194,10 @@ export function useAircraftLayer(map: Map | null) {
         closeOnClick: false,
         className: 'aircraft-popup',
       })
-      const hoveredCallsignRef: { current: string | null } = { current: null }
+      const selectedIcao24Ref: { current: string | null } = { current: null }
 
       popup.on('close', () => {
-        hoveredCallsignRef.current = null
+        selectedIcao24Ref.current = null
         hoveredPositionRef.current = null
         map.setFilter(LAYER_ID, null)
         map.triggerRepaint()
@@ -224,7 +224,7 @@ export function useAircraftLayer(map: Map | null) {
         // before we apply the new selection's state.
         popup.setLngLat(coordinates).setHTML(popupHtml(properties)).addTo(map)
 
-        hoveredCallsignRef.current = properties.callsign
+        selectedIcao24Ref.current = properties.icao24
         hoveredPositionRef.current = {
           lng: coordinates[0],
           lat: coordinates[1],
@@ -234,9 +234,9 @@ export function useAircraftLayer(map: Map | null) {
         map.triggerRepaint()
       })
 
-      fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef, hoveredPositionRef)
+      fetchAircraft(map, setAircraftCount, setLastUpdated, popup, selectedIcao24Ref, hoveredPositionRef)
       intervalId = window.setInterval(
-        () => fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef, hoveredPositionRef),
+        () => fetchAircraft(map, setAircraftCount, setLastUpdated, popup, selectedIcao24Ref, hoveredPositionRef),
         12000
       )
     }
