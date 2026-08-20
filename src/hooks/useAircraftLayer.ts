@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
 import { Popup } from 'maplibre-gl'
 import type { Map, GeoJSONSource } from 'maplibre-gl'
@@ -6,7 +6,7 @@ import type { Point } from 'geojson'
 import type { OpenSkyState, OpenSkyStatesResponse } from '../types'
 import planeIconUrl from '../lib/plane.svg?url'
 import helicopterIconUrl from '../lib/helicopter.svg?url'
-import { createTest3DLayer } from '../lib/test3dLayer'
+import { createAircraft3DLayer, type AircraftPosition } from '../lib/aircraft3DLayer'
 
 const OPENSKY_URL = '/opensky/states/all?lamin=34&lomin=-25&lamax=72&lomax=45&extended=1'
 const SOURCE_ID = 'aircraft'
@@ -147,6 +147,7 @@ async function fetchAircraft(
 export function useAircraftLayer(map: Map | null) {
   const [aircraftCount, setAircraftCount] = useState(0)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const aircraft3DPositionRef = useRef<AircraftPosition | null>(null)
 
   useEffect(() => {
     if (!map) return
@@ -162,7 +163,12 @@ export function useAircraftLayer(map: Map | null) {
         data: { type: 'FeatureCollection', features: [] },
       })
 
-      map.addLayer(createTest3DLayer('https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf'))
+      map.addLayer(
+        createAircraft3DLayer(
+          'https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf',
+          aircraft3DPositionRef
+        )
+      )
 
       map.addLayer({
         id: LAYER_ID,

@@ -1,21 +1,16 @@
 import { MercatorCoordinate, type CustomLayerInterface, type Map } from 'maplibre-gl'
 import * as THREE from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
+import type { MutableRefObject } from 'react'
 
-const MODEL_ORIGIN: [number, number] = [21.0, 52.2]
 const MODEL_ALTITUDE = 0
 
-export function createTest3DLayer(modelUrl: string): CustomLayerInterface {
-  const modelAsMercatorCoordinate = MercatorCoordinate.fromLngLat(MODEL_ORIGIN, MODEL_ALTITUDE)
+export type AircraftPosition = { lng: number; lat: number; heading: number }
 
-  const modelTransform = {
-    translateX: modelAsMercatorCoordinate.x,
-    translateY: modelAsMercatorCoordinate.y,
-    translateZ: modelAsMercatorCoordinate.z,
-    rotateX: Math.PI / 2,
-    scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits(),
-  }
-
+export function createAircraft3DLayer(
+  modelUrl: string,
+  positionRef: MutableRefObject<AircraftPosition | null>
+): CustomLayerInterface {
   let map: Map
   let camera: THREE.Camera
   let scene: THREE.Scene
@@ -54,12 +49,20 @@ export function createTest3DLayer(modelUrl: string): CustomLayerInterface {
     },
 
     render(_gl, args) {
-      const rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), modelTransform.rotateX)
+      if (!positionRef.current) return
+
+      const { lng, lat, heading } = positionRef.current
+      const modelAsMercatorCoordinate = MercatorCoordinate.fromLngLat([lng, lat], MODEL_ALTITUDE)
+      const scale = modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()
+
+      const rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2)
+      const rotationZ = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), heading)
 
       const m = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix)
       const l = new THREE.Matrix4()
-        .makeTranslation(modelTransform.translateX, modelTransform.translateY, modelTransform.translateZ)
-        .scale(new THREE.Vector3(modelTransform.scale, -modelTransform.scale, modelTransform.scale))
+        .makeTranslation(modelAsMercatorCoordinate.x, modelAsMercatorCoordinate.y, modelAsMercatorCoordinate.z)
+        .scale(new THREE.Vector3(scale, -scale, scale))
+        .multiply(rotationZ)
         .multiply(rotationX)
 
       camera.projectionMatrix = m.multiply(l)
