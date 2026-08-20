@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
+import { Popup } from 'maplibre-gl'
 import type { Map, GeoJSONSource } from 'maplibre-gl'
+import type { Point } from 'geojson'
 import type { OpenSkyState, OpenSkyStatesResponse } from '../types'
 import { createPlaneIcon } from '../lib/planeIcon'
 
@@ -57,6 +59,35 @@ export function useAircraftLayer(map: Map | null) {
           'icon-rotation-alignment': 'map',
           'icon-allow-overlap': true,
         },
+      })
+
+      map.on('click', LAYER_ID, (e) => {
+        const feature = e.features?.[0]
+        if (!feature) return
+
+        const coordinates = (feature.geometry as Point).coordinates.slice() as [number, number]
+        const { callsign, country, altitude, velocity } = feature.properties as {
+          callsign: string
+          country: string
+          altitude: number
+          velocity: number
+        }
+        const speedKmh = (velocity * 3.6).toFixed(0)
+
+        new Popup({ closeButton: true })
+          .setLngLat(coordinates)
+          .setHTML(
+            `<strong>${callsign}</strong><br/>Country: ${country}<br/>Altitude: ${altitude} m<br/>Speed: ${speedKmh} km/h`
+          )
+          .addTo(map)
+      })
+
+      map.on('mouseenter', LAYER_ID, () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+
+      map.on('mouseleave', LAYER_ID, () => {
+        map.getCanvas().style.cursor = ''
       })
 
       fetchAircraft(map)
