@@ -2,6 +2,10 @@
 
 Live map of air traffic over Europe. Fetches real-time aircraft positions from the OpenSky Network and renders them on a MapLibre GL JS map.
 
+| Light mode | Dark mode |
+| --- | --- |
+| ![Light mode map view](src/assets/light_mode.png) | ![Dark mode map view](src/assets/dark_mode.png) |
+
 ## Setup
 
 ```
@@ -40,6 +44,9 @@ The dev server (`vite-plugins/openskyProxyPlugin.ts`) exchanges these for an OAu
 - Data-driven icon rotation (`icon-rotate` bound to each feature's `heading` property) so plane icons point in their direction of travel.
 - CORS handling for a third-party API with no browser-facing CORS support, via a Vite dev-server proxy.
 - OAuth2 client-credentials auth against OpenSky, with the access token cached server-side until expiry, to avoid the much stricter anonymous rate limit.
+- Aircraft icons authored as SVG but rasterized to canvas at runtime (MapLibre's `addImage` needs raw pixels, and `map.loadImage()` only decodes PNG/JPEG), with a recolor + dilated-outline effect done entirely via canvas compositing.
+- Hover-driven popups that track the underlying feature's live position, updating in place as new data arrives instead of freezing at the coordinates from when the hover started.
+- Map style swapping (`map.setStyle()` for dark/light mode) with the aircraft source/layer/icons and hover handlers re-attached automatically via the `style.load` event, instead of only once on initial `load`.
 
 ## Known limitations / next steps
 
