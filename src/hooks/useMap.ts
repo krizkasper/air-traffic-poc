@@ -12,8 +12,8 @@ export function useMap(containerId: string) {
     const instance = new Map({
       container: containerId,
       style: STYLE_URL,
-      center: INITIAL_CENTER,
-      zoom: INITIAL_ZOOM,
+      center: [21.0, 52.2], // TEMP: testing 3D model visibility
+      zoom: 18, // TEMP: testing 3D model visibility
     })
     setMap(instance)
 

@@ -12,6 +12,7 @@ export function createTest3DLayer(modelUrl: string): CustomLayerInterface {
     translateX: modelAsMercatorCoordinate.x,
     translateY: modelAsMercatorCoordinate.y,
     translateZ: modelAsMercatorCoordinate.z,
+    rotateX: Math.PI / 2,
     scale: modelAsMercatorCoordinate.meterInMercatorCoordinateUnits(),
   }
 
@@ -53,10 +54,13 @@ export function createTest3DLayer(modelUrl: string): CustomLayerInterface {
     },
 
     render(_gl, args) {
+      const rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), modelTransform.rotateX)
+
       const m = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix)
       const l = new THREE.Matrix4()
         .makeTranslation(modelTransform.translateX, modelTransform.translateY, modelTransform.translateZ)
         .scale(new THREE.Vector3(modelTransform.scale, -modelTransform.scale, modelTransform.scale))
+        .multiply(rotationX)
 
       camera.projectionMatrix = m.multiply(l)
       renderer.resetState()

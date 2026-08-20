@@ -6,6 +6,7 @@ import type { Point } from 'geojson'
 import type { OpenSkyState, OpenSkyStatesResponse } from '../types'
 import planeIconUrl from '../lib/plane.svg?url'
 import helicopterIconUrl from '../lib/helicopter.svg?url'
+import { createTest3DLayer } from '../lib/test3dLayer'
 
 const OPENSKY_URL = '/opensky/states/all?lamin=34&lomin=-25&lamax=72&lomax=45&extended=1'
 const SOURCE_ID = 'aircraft'
@@ -160,6 +161,8 @@ export function useAircraftLayer(map: Map | null) {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] },
       })
+
+      map.addLayer(createTest3DLayer('https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf'))
 
       map.addLayer({
         id: LAYER_ID,
