@@ -4,11 +4,71 @@ import { Popup } from 'maplibre-gl'
 import type { Map, GeoJSONSource } from 'maplibre-gl'
 import type { Point } from 'geojson'
 import type { OpenSkyState, OpenSkyStatesResponse } from '../types'
-import { createPlaneIcon } from '../lib/planeIcon'
+import planeIconUrl from '../lib/plane.svg?url'
+import helicopterIconUrl from '../lib/helicopter.svg?url'
 
 const OPENSKY_URL = '/opensky/states/all?lamin=34&lomin=-25&lamax=72&lomax=45'
 const SOURCE_ID = 'aircraft'
 const LAYER_ID = 'aircraft-layer'
+
+// Rasterizes the image's silhouette (drawn at each offset, e.g. to dilate it
+// into an outline) and recolors it via source-in compositing, so the on-disk
+// SVG's own fill color doesn't matter.
+function rasterizeSilhouette(
+  image: HTMLImageElement,
+  size: number,
+  color: string,
+  offsets: [number, number][] = [[0, 0]],
+  padding = 0
+): HTMLCanvasElement {
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  const drawSize = size - padding * 2
+
+  for (const [dx, dy] of offsets) {
+    ctx.drawImage(image, padding + dx, padding + dy, drawSize, drawSize)
+  }
+
+  ctx.globalCompositeOperation = 'source-in'
+  ctx.fillStyle = color
+  ctx.fillRect(0, 0, size, size)
+
+  return canvas
+}
+
+// map.loadImage() only decodes PNG/JPEG, so SVGs are rasterized to a canvas
+// ourselves via <img>.decode(), which every evergreen browser supports for SVG.
+async function loadIcon(map: Map, id: string, url: string, color: string, size = 32): Promise<void> {
+  const image = new Image()
+  image.src = url
+  await image.decode()
+
+  // Black outline: the silhouette drawn in a ring of offsets to dilate it
+  // slightly, then the true-colored silhouette drawn on top at full size.
+  // The base icon is inset by `padding` first, so the dilated outline has
+  // room to grow without being clipped by the canvas edge.
+  const outlineWidth = 1.5
+  const padding = Math.ceil(outlineWidth)
+  const outlineSteps = 12
+  const outlineOffsets: [number, number][] = Array.from({ length: outlineSteps }, (_, i) => {
+    const angle = (i / outlineSteps) * Math.PI * 2
+    return [Math.cos(angle) * outlineWidth, Math.sin(angle) * outlineWidth]
+  })
+
+  const outline = rasterizeSilhouette(image, size, 'black', outlineOffsets, padding)
+  const fill = rasterizeSilhouette(image, size, color, [[0, 0]], padding)
+
+  const canvas = document.createElement('canvas')
+  canvas.width = size
+  canvas.height = size
+  const ctx = canvas.getContext('2d')!
+  ctx.drawImage(outline, 0, 0)
+  ctx.drawImage(fill, 0, 0)
+
+  map.addImage(id, ctx.getImageData(0, 0, size, size))
+}
 
 async function fetchAircraft(
   map: Map,
@@ -55,8 +115,9 @@ export function useAircraftLayer(map: Map | null) {
 
     let intervalId: number | undefined
 
-    const handleLoad = () => {
-      map.addImage('plane-icon', createPlaneIcon())
+    const handleLoad = async () => {
+      await loadIcon(map, 'plane-icon', planeIconUrl, '#facc15')
+      await loadIcon(map, 'helicopter-icon', helicopterIconUrl, '#facc15')
 
       map.addSource(SOURCE_ID, {
         type: 'geojson',
