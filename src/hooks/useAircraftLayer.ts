@@ -11,6 +11,24 @@ const OPENSKY_URL = '/opensky/states/all?lamin=34&lomin=-25&lamax=72&lomax=45'
 const SOURCE_ID = 'aircraft'
 const LAYER_ID = 'aircraft-layer'
 
+type AircraftProperties = {
+  heading: number
+  callsign: string
+  country: string
+  altitude: number
+  velocity: number
+}
+
+function popupHtml({ callsign, country, altitude, velocity }: AircraftProperties): string {
+  const speedKmh = (velocity * 3.6).toFixed(0)
+  return `<p class="font-semibold text-base">${callsign}</p>
+    <p class="text-sm text-white/70">${country}</p>
+    <div class="mt-2 text-sm space-y-1">
+      <p>Altitude: <span class="font-medium">${altitude} m</span></p>
+      <p>Speed: <span class="font-medium">${speedKmh} km/h</span></p>
+    </div>`
+}
+
 // Rasterizes the image's silhouette (drawn at each offset, e.g. to dilate it
 // into an outline) and recolors it via source-in compositing, so the on-disk
 // SVG's own fill color doesn't matter.
@@ -73,7 +91,9 @@ async function loadIcon(map: Map, id: string, url: string, color: string, size =
 async function fetchAircraft(
   map: Map,
   setAircraftCount: Dispatch<SetStateAction<number>>,
-  setLastUpdated: Dispatch<SetStateAction<Date | null>>
+  setLastUpdated: Dispatch<SetStateAction<Date | null>>,
+  popup: Popup,
+  hoveredCallsignRef: { current: string | null }
 ) {
   const response = await fetch(OPENSKY_URL)
   if (!response.ok) {
@@ -104,6 +124,16 @@ async function fetchAircraft(
 
   setAircraftCount(features.length)
   setLastUpdated(new Date())
+
+  if (hoveredCallsignRef.current) {
+    const hovered = features.find((f) => f.properties.callsign === hoveredCallsignRef.current)
+    if (hovered) {
+      popup.setLngLat(hovered.geometry.coordinates).setHTML(popupHtml(hovered.properties))
+    } else {
+      popup.remove()
+      hoveredCallsignRef.current = null
+    }
+  }
 }
 
 export function useAircraftLayer(map: Map | null) {
@@ -137,42 +167,37 @@ export function useAircraftLayer(map: Map | null) {
         },
       })
 
-      map.on('click', LAYER_ID, (e) => {
+      const popup = new Popup({
+        closeButton: false,
+        closeOnClick: false,
+        className: 'aircraft-popup',
+      })
+      const hoveredCallsignRef: { current: string | null } = { current: null }
+
+      map.on('mouseenter', LAYER_ID, (e) => {
+        map.getCanvas().style.cursor = 'pointer'
+
         const feature = e.features?.[0]
         if (!feature) return
 
         const coordinates = (feature.geometry as Point).coordinates.slice() as [number, number]
-        const { callsign, country, altitude, velocity } = feature.properties as {
-          callsign: string
-          country: string
-          altitude: number
-          velocity: number
-        }
-        const speedKmh = (velocity * 3.6).toFixed(0)
+        const properties = feature.properties as AircraftProperties
 
-        new Popup({ closeButton: true, className: 'aircraft-popup' })
-          .setLngLat(coordinates)
-          .setHTML(
-            `<p class="font-semibold text-base">${callsign}</p>
-             <p class="text-sm text-white/70">${country}</p>
-             <div class="mt-2 text-sm space-y-1">
-               <p>Altitude: <span class="font-medium">${altitude} m</span></p>
-               <p>Speed: <span class="font-medium">${speedKmh} km/h</span></p>
-             </div>`
-          )
-          .addTo(map)
-      })
-
-      map.on('mouseenter', LAYER_ID, () => {
-        map.getCanvas().style.cursor = 'pointer'
+        hoveredCallsignRef.current = properties.callsign
+        popup.setLngLat(coordinates).setHTML(popupHtml(properties)).addTo(map)
       })
 
       map.on('mouseleave', LAYER_ID, () => {
         map.getCanvas().style.cursor = ''
+        popup.remove()
+        hoveredCallsignRef.current = null
       })
 
-      fetchAircraft(map, setAircraftCount, setLastUpdated)
-      intervalId = window.setInterval(() => fetchAircraft(map, setAircraftCount, setLastUpdated), 12000)
+      fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef)
+      intervalId = window.setInterval(
+        () => fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef),
+        12000
+      )
     }
 
     map.on('load', handleLoad)
