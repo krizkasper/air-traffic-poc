@@ -5,7 +5,8 @@ import { LocateButton } from './components/LocateButton'
 
 export const App = () => {
   const map = useMap('map')
-  useAircraftLayer(map)
+  const { aircraftCount, lastUpdated } = useAircraftLayer(map)
+  console.log('aircraftCount:', aircraftCount, 'lastUpdated:', lastUpdated)
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100vh' }}>

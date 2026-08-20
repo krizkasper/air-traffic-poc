@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import type { Dispatch, SetStateAction } from 'react'
 import { Popup } from 'maplibre-gl'
 import type { Map, GeoJSONSource } from 'maplibre-gl'
 import type { Point } from 'geojson'
@@ -9,8 +10,16 @@ const OPENSKY_URL = '/opensky/states/all?lamin=34&lomin=-25&lamax=72&lomax=45'
 const SOURCE_ID = 'aircraft'
 const LAYER_ID = 'aircraft-layer'
 
-async function fetchAircraft(map: Map) {
+async function fetchAircraft(
+  map: Map,
+  setAircraftCount: Dispatch<SetStateAction<number>>,
+  setLastUpdated: Dispatch<SetStateAction<Date | null>>
+) {
   const response = await fetch(OPENSKY_URL)
+  if (!response.ok) {
+    console.error(`OpenSky request failed: ${response.status} ${response.statusText}`)
+    return
+  }
   const data: OpenSkyStatesResponse = await response.json()
 
   const features = (data.states ?? [])
@@ -32,9 +41,15 @@ async function fetchAircraft(map: Map) {
 
   const source = map.getSource(SOURCE_ID) as GeoJSONSource
   source.setData({ type: 'FeatureCollection', features })
+
+  setAircraftCount(features.length)
+  setLastUpdated(new Date())
 }
 
 export function useAircraftLayer(map: Map | null) {
+  const [aircraftCount, setAircraftCount] = useState(0)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
   useEffect(() => {
     if (!map) return
 
@@ -90,8 +105,8 @@ export function useAircraftLayer(map: Map | null) {
         map.getCanvas().style.cursor = ''
       })
 
-      fetchAircraft(map)
-      intervalId = window.setInterval(() => fetchAircraft(map), 12000)
+      fetchAircraft(map, setAircraftCount, setLastUpdated)
+      intervalId = window.setInterval(() => fetchAircraft(map, setAircraftCount, setLastUpdated), 12000)
     }
 
     map.on('load', handleLoad)
@@ -100,4 +115,6 @@ export function useAircraftLayer(map: Map | null) {
       window.clearInterval(intervalId)
     }
   }, [map])
+
+  return { aircraftCount, lastUpdated }
 }
