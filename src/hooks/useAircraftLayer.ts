@@ -190,7 +190,7 @@ export function useAircraftLayer(map: Map | null) {
       })
 
       const popup = new Popup({
-        closeButton: false,
+        closeButton: true,
         closeOnClick: false,
         className: 'aircraft-popup',
       })
@@ -200,6 +200,7 @@ export function useAircraftLayer(map: Map | null) {
         hoveredCallsignRef.current = null
         hoveredPositionRef.current = null
         map.setFilter(LAYER_ID, null)
+        map.triggerRepaint()
       })
 
       map.on('mouseenter', LAYER_ID, () => {
@@ -217,6 +218,12 @@ export function useAircraftLayer(map: Map | null) {
         const coordinates = (feature.geometry as Point).coordinates.slice() as [number, number]
         const properties = feature.properties as AircraftProperties
 
+        // Popup.addTo() calls remove() (and fires 'close') internally when the popup
+        // is already open, which would otherwise null out the refs we're about to set
+        // below. Re-adding it first lets that close-of-the-previous-selection settle
+        // before we apply the new selection's state.
+        popup.setLngLat(coordinates).setHTML(popupHtml(properties)).addTo(map)
+
         hoveredCallsignRef.current = properties.callsign
         hoveredPositionRef.current = {
           lng: coordinates[0],
@@ -224,7 +231,7 @@ export function useAircraftLayer(map: Map | null) {
           heading: properties.heading,
         }
         map.setFilter(LAYER_ID, ['!=', ['get', 'icao24'], properties.icao24])
-        popup.setLngLat(coordinates).setHTML(popupHtml(properties)).addTo(map)
+        map.triggerRepaint()
       })
 
       fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef, hoveredPositionRef)
