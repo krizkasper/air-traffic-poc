@@ -19,7 +19,7 @@ async function fetchAircraft(map: Map) {
       type: 'Feature' as const,
       geometry: {
         type: 'Point' as const,
-        coordinates: [state[5], state[6]],
+        coordinates: [state[5], state[6]] as [number, number],
       },
       properties: {
         heading: state[10] ?? 0,
