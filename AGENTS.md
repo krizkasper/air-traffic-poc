@@ -8,7 +8,7 @@ Real-time air traffic map. Vite + React 19 + TypeScript, rendered with MapLibre 
 
 - `src/hooks/` — stateful map logic (creating the Map instance, adding sources/layers, data fetching tied to map lifecycle events).
 - `src/components/` — UI elements rendered over the map (buttons, controls); receive the `Map` instance as a prop, don't create or own it.
-- `src/lib/` — static SVG icon assets (aircraft, helicopter, dark/light mode toggle), imported with Vite's `?url` suffix and rasterized at runtime in `useAircraftLayer.ts`. Not a home for helper code.
+- `src/lib/` — static SVG icon assets (aircraft, helicopter, dark/light mode toggle, globe), imported with Vite's `?url` suffix. The aircraft/helicopter icons are rasterized at runtime in `useAircraftLayer.ts`; the toggle icons are used directly as `<img>` sources. Not a home for helper code.
 - `src/types.ts` — shared type definitions, notably the OpenSky API response shape.
 - `vite-plugins/` — Node-side Vite plugins (dev server only, not part of the app bundle), e.g. the OpenSky OAuth2 proxy.
 

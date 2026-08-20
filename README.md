@@ -47,6 +47,8 @@ The dev server (`vite-plugins/openskyProxyPlugin.ts`) exchanges these for an OAu
 - Aircraft icons authored as SVG but rasterized to canvas at runtime (MapLibre's `addImage` needs raw pixels, and `map.loadImage()` only decodes PNG/JPEG), with a recolor + dilated-outline effect done entirely via canvas compositing.
 - Hover-driven popups that track the underlying feature's live position, updating in place as new data arrives instead of freezing at the coordinates from when the hover started.
 - Map style swapping (`map.setStyle()` for dark/light mode) with the aircraft source/layer/icons and hover handlers re-attached automatically via the `style.load` event, instead of only once on initial `load`.
+- OpenSky's `category` field (via `&extended=1`) drives both which icon renders (helicopter vs. fixed-wing) and its size, via data-driven `match` expressions on `icon-image`/`icon-size` — no per-feature JS branching.
+- A small map-control toolbar (locate me, reset view, dark/light style, mercator/globe projection) built as independent components that each just call a method on the shared `Map` instance.
 
 ## Known limitations / next steps
 
