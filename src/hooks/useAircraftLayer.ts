@@ -208,9 +208,9 @@ export function useAircraftLayer(map: Map | null) {
       )
     }
 
-    map.on('load', handleLoad)
+    map.on('style.load', handleLoad)
     return () => {
-      map.off('load', handleLoad)
+      map.off('style.load', handleLoad)
       window.clearInterval(intervalId)
     }
   }, [map])
