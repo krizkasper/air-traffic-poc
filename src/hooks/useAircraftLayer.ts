@@ -17,16 +17,20 @@ type AircraftProperties = {
   country: string
   altitude: number
   velocity: number
+  onGround: boolean
 }
 
-function popupHtml({ callsign, country, altitude, velocity }: AircraftProperties): string {
+function popupHtml({ callsign, country, altitude, velocity, onGround }: AircraftProperties): string {
   const speedKmh = (velocity * 3.6).toFixed(0)
+  const details = onGround
+    ? `<p class="mt-2 text-sm font-medium">On ground</p>`
+    : `<div class="mt-2 text-sm space-y-1">
+        <p>Altitude: <span class="font-medium">${altitude} m</span></p>
+        <p>Speed: <span class="font-medium">${speedKmh} km/h</span></p>
+      </div>`
   return `<p class="font-semibold text-base">${callsign}</p>
     <p class="text-sm text-white/70">${country}</p>
-    <div class="mt-2 text-sm space-y-1">
-      <p>Altitude: <span class="font-medium">${altitude} m</span></p>
-      <p>Speed: <span class="font-medium">${speedKmh} km/h</span></p>
-    </div>`
+    ${details}`
 }
 
 // Rasterizes the image's silhouette (drawn at each offset, e.g. to dilate it
@@ -116,6 +120,7 @@ async function fetchAircraft(
         country: state[2],
         altitude: state[7] ?? 0,
         velocity: state[9] ?? 0,
+        onGround: state[8],
       },
     }))
 
@@ -164,6 +169,9 @@ export function useAircraftLayer(map: Map | null) {
           'icon-rotate': ['get', 'heading'],
           'icon-rotation-alignment': 'map',
           'icon-allow-overlap': true,
+        },
+        paint: {
+          'icon-opacity': ['case', ['get', 'onGround'], 0.4, 1],
         },
       })
 
