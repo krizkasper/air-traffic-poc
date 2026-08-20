@@ -3,3 +3,28 @@
 body {
   font-family: 'Inter', system-ui, sans-serif;
 }
+
+.aircraft-popup .maplibregl-popup-content {
+  background: rgba(23, 37, 84, 0.4);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  padding: 0.875rem 1rem;
+  color: white;
+}
+
+.aircraft-popup .maplibregl-popup-tip {
+  border-top-color: rgba(23, 37, 84, 0.4);
+  border-bottom-color: rgba(23, 37, 84, 0.4);
+  border-left-color: rgba(23, 37, 84, 0.4);
+  border-right-color: rgba(23, 37, 84, 0.4);
+}
+
+.aircraft-popup .maplibregl-popup-close-button {
+  color: white;
+  font-size: 1.1rem;
+  right: 10px;
+  top: 5px;
+}

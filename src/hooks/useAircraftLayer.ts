@@ -89,10 +89,15 @@ export function useAircraftLayer(map: Map | null) {
         }
         const speedKmh = (velocity * 3.6).toFixed(0)
 
-        new Popup({ closeButton: true })
+        new Popup({ closeButton: true, className: 'aircraft-popup' })
           .setLngLat(coordinates)
           .setHTML(
-            `<strong>${callsign}</strong><br/>Country: ${country}<br/>Altitude: ${altitude} m<br/>Speed: ${speedKmh} km/h`
+            `<p class="font-semibold text-base">${callsign}</p>
+             <p class="text-sm text-white/70">${country}</p>
+             <div class="mt-2 text-sm space-y-1">
+               <p>Altitude: <span class="font-medium">${altitude} m</span></p>
+               <p>Speed: <span class="font-medium">${speedKmh} km/h</span></p>
+             </div>`
           )
           .addTo(map)
       })
