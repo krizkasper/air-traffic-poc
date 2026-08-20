@@ -21,6 +21,10 @@ async function fetchAircraft(map: Map) {
       },
       properties: {
         heading: state[10] ?? 0,
+        callsign: state[1]?.trim() || 'Unknown',
+        country: state[2],
+        altitude: state[7] ?? 0,
+        velocity: state[9] ?? 0,
       },
     }))
 
