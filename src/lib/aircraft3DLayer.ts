@@ -5,6 +5,12 @@ import type { MutableRefObject } from 'react'
 
 const MODEL_ALTITUDE = 0
 
+// Deliberately not to scale: meterInMercatorCoordinateUnits() alone gives the
+// model its real-world size, which is imperceptible at the country/continent
+// zoom levels (5-8) where users hover over aircraft. This factor blows it up
+// into a visual highlight, not a geographically accurate object.
+const EXAGGERATION_FACTOR = 3000
+
 export type AircraftPosition = { lng: number; lat: number; heading: number }
 
 export function createAircraft3DLayer(
@@ -53,10 +59,12 @@ export function createAircraft3DLayer(
 
       const { lng, lat, heading } = positionRef.current
       const modelAsMercatorCoordinate = MercatorCoordinate.fromLngLat([lng, lat], MODEL_ALTITUDE)
-      const scale = modelAsMercatorCoordinate.meterInMercatorCoordinateUnits()
+      const scale = modelAsMercatorCoordinate.meterInMercatorCoordinateUnits() * EXAGGERATION_FACTOR
 
       const rotationX = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(1, 0, 0), Math.PI / 2)
-      const rotationZ = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), heading)
+      // +90° corrects a fixed offset in aircraft3d.glb's base orientation: its
+      // modeled "nose" direction doesn't line up with OpenSky's heading convention.
+      const rotationZ = new THREE.Matrix4().makeRotationAxis(new THREE.Vector3(0, 0, 1), heading + Math.PI / 2)
 
       const m = new THREE.Matrix4().fromArray(args.defaultProjectionData.mainMatrix)
       const l = new THREE.Matrix4()

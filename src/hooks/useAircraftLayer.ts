@@ -7,6 +7,7 @@ import type { OpenSkyState, OpenSkyStatesResponse } from '../types'
 import planeIconUrl from '../lib/plane.svg?url'
 import helicopterIconUrl from '../lib/helicopter.svg?url'
 import { createAircraft3DLayer, type AircraftPosition } from '../lib/aircraft3DLayer'
+import aircraftModelUrl from '../lib/aircraft3d.glb?url'
 
 const OPENSKY_URL = '/opensky/states/all?lamin=34&lomin=-25&lamax=72&lomax=45&extended=1'
 const SOURCE_ID = 'aircraft'
@@ -99,7 +100,8 @@ async function fetchAircraft(
   setAircraftCount: Dispatch<SetStateAction<number>>,
   setLastUpdated: Dispatch<SetStateAction<Date | null>>,
   popup: Popup,
-  hoveredCallsignRef: { current: string | null }
+  hoveredCallsignRef: { current: string | null },
+  hoveredPositionRef: { current: AircraftPosition | null }
 ) {
   const response = await fetch(OPENSKY_URL)
   if (!response.ok) {
@@ -137,9 +139,13 @@ async function fetchAircraft(
     const hovered = features.find((f) => f.properties.callsign === hoveredCallsignRef.current)
     if (hovered) {
       popup.setLngLat(hovered.geometry.coordinates).setHTML(popupHtml(hovered.properties))
+      hoveredPositionRef.current = {
+        lng: hovered.geometry.coordinates[0],
+        lat: hovered.geometry.coordinates[1],
+        heading: hovered.properties.heading,
+      }
     } else {
       popup.remove()
-      hoveredCallsignRef.current = null
     }
   }
 }
@@ -147,7 +153,7 @@ async function fetchAircraft(
 export function useAircraftLayer(map: Map | null) {
   const [aircraftCount, setAircraftCount] = useState(0)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  const aircraft3DPositionRef = useRef<AircraftPosition | null>(null)
+  const hoveredPositionRef = useRef<AircraftPosition | null>(null)
 
   useEffect(() => {
     if (!map) return
@@ -163,12 +169,7 @@ export function useAircraftLayer(map: Map | null) {
         data: { type: 'FeatureCollection', features: [] },
       })
 
-      map.addLayer(
-        createAircraft3DLayer(
-          'https://maplibre.org/maplibre-gl-js/docs/assets/34M_17/34M_17.gltf',
-          aircraft3DPositionRef
-        )
-      )
+      map.addLayer(createAircraft3DLayer(aircraftModelUrl, hoveredPositionRef))
 
       map.addLayer({
         id: LAYER_ID,
@@ -177,7 +178,7 @@ export function useAircraftLayer(map: Map | null) {
         layout: {
           'icon-image': ['match', ['get', 'category'], 8, 'helicopter-icon', 'plane-icon'],
           'icon-size': ['match', ['get', 'category'], 6, 1.3, 5, 1.2, 4, 1.1, 2, 0.6, 3, 0.7, 0.8],
-          'icon-rotate': ['get', 'heading'],
+          'icon-rotate': ['-', ['get', 'heading'], 90],
           'icon-rotation-alignment': 'map',
           'icon-allow-overlap': true,
         },
@@ -193,9 +194,20 @@ export function useAircraftLayer(map: Map | null) {
       })
       const hoveredCallsignRef: { current: string | null } = { current: null }
 
-      map.on('mouseenter', LAYER_ID, (e) => {
-        map.getCanvas().style.cursor = 'pointer'
+      popup.on('close', () => {
+        hoveredCallsignRef.current = null
+        hoveredPositionRef.current = null
+      })
 
+      map.on('mouseenter', LAYER_ID, () => {
+        map.getCanvas().style.cursor = 'pointer'
+      })
+
+      map.on('mouseleave', LAYER_ID, () => {
+        map.getCanvas().style.cursor = ''
+      })
+
+      map.on('click', LAYER_ID, (e) => {
         const feature = e.features?.[0]
         if (!feature) return
 
@@ -203,18 +215,17 @@ export function useAircraftLayer(map: Map | null) {
         const properties = feature.properties as AircraftProperties
 
         hoveredCallsignRef.current = properties.callsign
+        hoveredPositionRef.current = {
+          lng: coordinates[0],
+          lat: coordinates[1],
+          heading: properties.heading,
+        }
         popup.setLngLat(coordinates).setHTML(popupHtml(properties)).addTo(map)
       })
 
-      map.on('mouseleave', LAYER_ID, () => {
-        map.getCanvas().style.cursor = ''
-        popup.remove()
-        hoveredCallsignRef.current = null
-      })
-
-      fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef)
+      fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef, hoveredPositionRef)
       intervalId = window.setInterval(
-        () => fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef),
+        () => fetchAircraft(map, setAircraftCount, setLastUpdated, popup, hoveredCallsignRef, hoveredPositionRef),
         12000
       )
     }
