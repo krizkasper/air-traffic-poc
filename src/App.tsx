@@ -4,6 +4,7 @@ import { useAircraftLayer } from './hooks/useAircraftLayer'
 import { LocateButton } from './components/LocateButton'
 import { ResetViewButton } from './components/ResetViewButton'
 import { DarkModeToggle } from './components/DarkModeToggle'
+import { GlobeToggle } from './components/GlobeToggle'
 import { Hud } from './components/Hud'
 
 export const App = () => {
@@ -15,6 +16,7 @@ export const App = () => {
       <div id="map" style={{ width: '100%', height: '100%' }} />
       <div className="absolute top-56 left-6 flex items-center gap-3">
         <DarkModeToggle map={map} />
+        <GlobeToggle map={map} />
         <LocateButton map={map} />
         <ResetViewButton map={map} />
       </div>
